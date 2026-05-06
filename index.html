@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Cavidades Corpóreas · Cirurgia Veterinária</title>
+<style>
+  :root {
+    --azul:       #1565C0;
+    --azul-esc:   #0D47A1;
+    --azul-md:    #1976D2;
+    --azul-cl:    #BBDEFB;
+    --azul-xc:    #E3F2FD;
+    --branco:     #FFFFFF;
+    --cinza:      #F5F9FF;
+    --texto:      #0D2137;
+    --sombra:     0 4px 24px rgba(21,101,192,.13);
+    --radius:     14px;
+    --transicao:  .25s ease;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #E3F2FD 100%);
+    min-height: 100vh;
+    color: var(--texto);
+  }
+
+  /* ── HEADER ─────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, var(--azul-esc), var(--azul-md));
+    color: var(--branco);
+    text-align: center;
+    padding: 2rem 1rem 1.6rem;
+    position: relative;
+    box-shadow: 0 3px 16px rgba(13,71,161,.3);
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.18);
+    border: 1.5px solid rgba(255,255,255,.4);
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: .3rem 1rem;
+    margin-bottom: .8rem;
+  }
+  .header h1 { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 800; }
+  .header p  { font-size: .9rem; opacity: .85; margin-top: .4rem; }
+
+  /* ── TELA ────────────────────────────────────── */
+  .tela { display: none; max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .tela.ativa { display: block; }
+
+  /* ── CARD ────────────────────────────────────── */
+  .card {
+    background: var(--branco);
+    border-radius: var(--radius);
+    box-shadow: var(--sombra);
+    padding: 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* ── FORMULÁRIO DE NOME ──────────────────────── */
+  .form-label { font-weight: 700; color: var(--azul-esc); margin-bottom: .5rem; display: block; font-size: .95rem; }
+  .form-input {
+    width: 100%; border: 2px solid var(--azul-cl);
+    border-radius: 10px; padding: .75rem 1rem;
+    font-size: 1rem; outline: none; transition: border var(--transicao);
+    color: var(--texto);
+  }
+  .form-input:focus { border-color: var(--azul-md); }
+
+  .btn-primario {
+    display: block; width: 100%; padding: 1rem;
+    background: linear-gradient(135deg, var(--azul), var(--azul-md));
+    color: var(--branco); border: none; border-radius: 10px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer;
+    margin-top: 1.4rem; transition: transform var(--transicao), box-shadow var(--transicao);
+    box-shadow: 0 4px 14px rgba(21,101,192,.3);
+  }
+  .btn-primario:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21,101,192,.4); }
+  .btn-primario:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── QUIZ ────────────────────────────────────── */
+  .quiz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
+  }
+  .quiz-info { font-size: .85rem; color: var(--azul); font-weight: 600; }
+
+  .progress-bar-wrap { width: 100%; height: 8px; background: var(--azul-cl); border-radius: 4px; margin-bottom: 1.2rem; }
+  .progress-bar-fill { height: 100%; background: var(--azul); border-radius: 4px; transition: width .4s ease; }
+
+  .timer-anel {
+    width: 60px; height: 60px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .timer-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .timer-circulo { transition: stroke-dashoffset .9s linear; }
+  .timer-num { font-size: 1.1rem; font-weight: 800; color: var(--azul-esc); z-index: 1; }
+
+  .pergunta-num { font-size: .8rem; font-weight: 700; color: var(--azul); letter-spacing: 1px; margin-bottom: .5rem; }
+  .pergunta-texto { font-size: 1.05rem; font-weight: 700; line-height: 1.5; margin-bottom: 1.2rem; }
+
+  .opcoes { display: flex; flex-direction: column; gap: .7rem; }
+  .opcao {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .85rem 1.1rem; border: 2px solid var(--azul-cl);
+    border-radius: 10px; cursor: pointer; transition: all var(--transicao);
+    background: var(--branco); font-size: .95rem; font-weight: 500;
+  }
+  .opcao:hover:not(.bloq) { border-color: var(--azul-md); background: var(--azul-xc); }
+  .opcao .letra {
+    min-width: 28px; height: 28px; background: var(--azul-cl);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .8rem; color: var(--azul-esc);
+    transition: all var(--transicao);
+  }
+  .opcao.certa { border-color: #2E7D32; background: #E8F5E9; }
+  .opcao.certa .letra { background: #2E7D32; color: #fff; }
+  .opcao.errada { border-color: #C62828; background: #FFEBEE; }
+  .opcao.errada .letra { background: #C62828; color: #fff; }
+  .opcao.bloq { cursor: not-allowed; opacity: .75; }
+
+  /* ── STREAK / BONUS ──────────────────────────── */
+  .streak-box {
+    display: flex; gap: .8rem; margin-top: 1rem; flex-wrap: wrap;
+  }
+  .streak-item {
+    background: var(--azul-xc); border: 1.5px solid var(--azul-cl);
+    border-radius: 8px; padding: .4rem .8rem;
+    font-size: .82rem; font-weight: 700; color: var(--azul-esc);
+  }
+  .streak-item.bonus { background: #FFF8E1; border-color: #FFD54F; color: #F57F17; }
+  .streak-item.malus { background: #FFEBEE; border-color: #EF9A9A; color: #C62828; }
+
+  .pts-flash {
+    position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 2rem; font-weight: 900; pointer-events: none; z-index: 999;
+    animation: flash .8s forwards;
+  }
+  @keyframes flash { 0%{opacity:1;transform:translate(-50%,-80%)} 100%{opacity:0;transform:translate(-50%,-150%)} }
+
+  /* ── FIM / RANKING ───────────────────────────── */
+  .resultado-topo { text-align: center; padding: 1.5rem 0 1rem; }
+  .resultado-topo .pontos { font-size: 3rem; font-weight: 900; color: var(--azul-esc); }
+  .resultado-topo .sub    { font-size: 1rem; color: #555; margin-top: .3rem; }
+
+  .ranking-lista { list-style: none; }
+  .ranking-item {
+    display: flex; align-items: center; gap: .9rem;
+    padding: .8rem 1rem; border-radius: 10px; margin-bottom: .6rem;
+    border: 2px solid var(--azul-cl); background: var(--branco);
+    transition: transform var(--transicao);
+  }
+  .ranking-item:hover { transform: translateX(4px); }
+  .ranking-pos { min-width: 32px; font-size: 1.1rem; font-weight: 900; color: var(--azul); }
+  .ranking-nome { flex: 1; font-weight: 600; }
+  .ranking-pontos { font-weight: 800; color: var(--azul-esc); }
+  .ranking-turma { font-size: .75rem; color: #888; }
+  .estrela { font-size: 1.2rem; }
+  .ranking-item.ouro   { background: #FFFDE7; border-color: #FFD54F; }
+  .ranking-item.prata  { background: #F5F5F5; border-color: #BDBDBD; }
+  .ranking-item.bronze { background: #FBE9E7; border-color: #FFAB91; }
+
+  .erro-msg { color: #C62828; font-size: .85rem; margin-top: .5rem; min-height: 1.2em; }
+
+  .loading { text-align: center; padding: 2rem; color: var(--azul); font-weight: 600; }
+
+  /* ── RESPONSIVO ──────────────────────────────── */
+  @media(max-width:440px) {
+    .card { padding: 1.2rem; }
+    .pergunta-texto { font-size: .97rem; }
+    .opcao { font-size: .88rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">Cirurgia Veterinária</div>
+  <h1>Cavidades Corpóreas</h1>
+  <p>Quiz Interativo · Prof. Mv. José Alírio S. O. Júnior</p>
+</div>
+
+<!-- ── TELA 1: CADASTRO ─────────────────────── -->
+<div id="tela-cadastro" class="tela ativa">
+  <div class="card" style="margin-top:1.5rem">
+    <label class="form-label">👤 Seu nome completo</label>
+    <input id="inp-nome" class="form-input" type="text" placeholder="Digite seu nome..." maxlength="60" autocomplete="off">
+
+    <div id="erro-cadastro" class="erro-msg"></div>
+    <button class="btn-primario" onclick="iniciar()">▶ Iniciar Quiz</button>
+  </div>
+  <div class="card">
+    <h3 style="color:var(--azul-esc);margin-bottom:1rem;font-size:1rem">📋 Instruções</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:.7rem">
+      <li style="display:flex;gap:.7rem;align-items:flex-start"><span style="font-size:1.1rem">⏱️</span><span>Você tem <strong>25 segundos</strong> por questão — quanto mais rápido acertar, maior a pontuação.</span></li>
+      <li style="display:flex;gap:.7rem;align-items:flex-start"><span style="font-size:1.1rem">🔥</span><span><strong>5 acertos seguidos</strong> concedem bônus de <strong>+25%</strong> na pontuação da rodada.</span></li>
+      <li style="display:flex;gap:.7rem;align-items:flex-start"><span style="font-size:1.1rem">⚠️</span><span><strong>3 erros seguidos</strong> aplicam penalidade de <strong>-15%</strong> na pontuação acumulada.</span></li>
+      <li style="display:flex;gap:.7rem;align-items:flex-start"><span style="font-size:1.1rem">🔒</span><span>Apenas <strong>uma tentativa</strong> é permitida por aluno.</span></li>
+      <li style="display:flex;gap:.7rem;align-items:flex-start"><span style="font-size:1.1rem">🏅</span><span>Ao final, o <strong>ranking completo</strong> da turma será exibido com os três melhores destacados.</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ── TELA 2: QUIZ ─────────────────────────── -->
+<div id="tela-quiz" class="tela">
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress"></div></div>
+  <div class="quiz-header">
+    <div>
+      <div class="quiz-info">🏆 Pontuação: <span id="pts-display">0</span></div>
+      <div class="streak-box" id="streak-box"></div>
+    </div>
+    <div class="timer-anel">
+      <svg class="timer-svg" width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="26" fill="none" stroke="#BBDEFB" stroke-width="6"/>
+        <circle id="timer-circulo" class="timer-circulo" cx="30" cy="30" r="26"
+          fill="none" stroke="#1565C0" stroke-width="6"
+          stroke-dasharray="163.4" stroke-dashoffset="0"/>
+      </svg>
+      <span class="timer-num" id="timer-num">25</span>
+    </div>
+  </div>
+  <div class="card" id="card-pergunta">
+    <div class="pergunta-num" id="perg-num">QUESTÃO 1 / 30</div>
+    <div class="pergunta-texto" id="perg-texto"></div>
+    <div class="opcoes" id="opcoes"></div>
+  </div>
+</div>
+
+<!-- ── TELA 3: RESULTADO ────────────────────── -->
+<div id="tela-resultado" class="tela">
+  <div class="card resultado-topo">
+    <div>🎉 Parabéns, <span id="res-nome"></span>!</div>
+    <div class="pontos" id="res-pontos">0</div>
+    <div class="sub" id="res-sub"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="color:var(--azul-esc)">🏅 Ranking da Turma</h2>
+      <button onclick="carregarRanking()" style="background:var(--azul-xc);border:1.5px solid var(--azul-cl);color:var(--azul-esc);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer">↻ Atualizar</button>
+    </div>
+    <div id="ranking-container"><div class="loading">Carregando ranking...</div></div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────
+   CONFIGURAÇÃO — substitua pela URL do Apps Script
+   ───────────────────────────────────────────────── */
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMNqrWegkahdbJh0qG0H79JKPPXToEH3ggkHDOY7KBUSWcjSls0ju1_weCAOlao0ZW/exec';
+
+/* ─────────────────────────────────────────────────
+   BANCO DE PERGUNTAS — 30 questões · Cavidades Corpóreas
+   Distribuição: A(8) B(8) C(7) D(7)
+   ───────────────────────────────────────────────── */
+const perguntas = [
+  { // 1 — A
+    q: "Qual é a principal finalidade da toracotomia lateral?",
+    opts: ["Acessar área específica da cavidade torácica","Ampliar acesso à cavidade pélvica","Realizar laparotomia exploratória","Drenar cavidade abdominal"],
+    c: 0
+  },
+  { // 2 — B
+    q: "Qual fio é recomendado para síntese intercostal na toracotomia?",
+    opts: ["Categute cromado","Náilon ou Poliglactina 910 a partir do nº 0","Fio de aço nº 0","Seda trançada"],
+    c: 1
+  },
+  { // 3 — C
+    q: "Qual EIC esquerdo é indicado para abordagem ao ducto arterioso persistente?",
+    opts: ["2º ou 3º EIC","6º ou 7º EIC","4º ou 5º EIC","8º ou 9º EIC"],
+    c: 2
+  },
+  { // 4 — D
+    q: "A toracotomia lateral, com osteotomia de costela, aumenta o acesso em:",
+    opts: ["10%","20%","25%","33%"],
+    c: 3
+  },
+  { // 5 — A
+    q: "Na abertura da cavidade torácica, a pleura deve ser rompida durante:",
+    opts: ["Expiração ou apneia","Inspiração máxima","Pós-intubação sem ventilação","Qualquer fase respiratória"],
+    c: 0
+  },
+  { // 6 — B
+    q: "A esternotomia difere da toracotomia lateral porque:",
+    opts: ["Acessa somente o pulmão direito","Permite acesso à cavidade torácica inteira","É realizada sem anestesia geral","Usa incisão paracostal"],
+    c: 1
+  },
+  { // 7 — C
+    q: "A anestesia indicada para toracotomia lateral é:",
+    opts: ["Local com sedação leve","Epidural exclusiva","Geral inalatória com ventilação mecânica","Regional intercostal"],
+    c: 2
+  },
+  { // 8 — D
+    q: "Qual das opções é indicação de toracotomia relacionada ao coração?",
+    opts: ["Megaesôfago","Abscessos pulmonares","Fraturas de costela","Ducto arterioso persistente"],
+    c: 3
+  },
+  { // 9 — A
+    q: "A incisão na toracotomia lateral deve ser feita na borda:",
+    opts: ["Caudal da costela (músculos intercostais)","Cranial da costela","Sobre a costela em sua face lateral","Borda esternal"],
+    c: 0
+  },
+  { // 10 — B
+    q: "Qual sutura é utilizada no subcutâneo na síntese da laparotomia mediana?",
+    opts: ["Simples separado com Náilon","Contínuo intradérmico com Poliglactina 910","Pontos em X com fio de aço","Wolf com categute"],
+    c: 1
+  },
+  { // 11 — C
+    q: "A laparotomia pelo flanco acessa os músculos na seguinte sequência:",
+    opts: ["Reto abdominal, oblíquo interno, peritônio","Oblíquo externo, reto abdominal, transverso","Oblíquo externo, oblíquo interno, transverso do abdome","Transverso, oblíquo interno, peritônio"],
+    c: 2
+  },
+  { // 12 — D
+    q: "A incisão mediana na laparotomia é feita sobre:",
+    opts: ["Músculo oblíquo externo","Fáscia do reto abdominal lateral","Linha paramediana direita","Linha alba"],
+    c: 3
+  },
+  { // 13 — A
+    q: "Na toracocentese, o cateter é introduzido de forma:",
+    opts: ["Perpendicular à parede torácica no EIC","Paralela às costelas na borda dorsal","Oblíqua na região esternal","Cranial à costela alvo"],
+    c: 0
+  },
+  { // 14 — B
+    q: "Qual estrutura NÃO é acessada pela cavidade pélvica?",
+    opts: ["Próstata","Vesícula biliar","Uretra","Reto"],
+    c: 1
+  },
+  { // 15 — C
+    q: "A osteotomia tripla do púbis requer fixação pós-operatória com:",
+    opts: ["Poliglactina 910 absorvível","Parafuso cortical de titânio","Fio de aço nº 0","Pino de Steinmann"],
+    c: 2
+  },
+  { // 16 — D
+    q: "Em relação à osteotomia isquiopúbica, é correto afirmar:",
+    opts: ["Maior risco de lesão nervosa que a tripla","Acesso pior à cavidade pélvica","Impede o deslocamento do retalho ósseo","Menor risco de lesão de nervos que a tripla"],
+    c: 3
+  },
+  { // 17 — A
+    q: "Qual dos achados indica piotórax como indicação de toracocentese?",
+    opts: ["Presença de pus na cavidade pleural","Colapso do arco costal","Divertículo esofágico","Estenose de válvula pulmonar"],
+    c: 0
+  },
+  { // 18 — B
+    q: "A esternotomia tem acesso limitado à porção:",
+    opts: ["Esternal ventral","Dorsal (vasos e hilo bronquial)","Pericárdica ventral","Diafragmática"],
+    c: 1
+  },
+  { // 19 — C
+    q: "Para toracotomia lateral, o decúbito do paciente deve ser:",
+    opts: ["Ventral (prono)","Dorsal (supino)","Lateral direito ou esquerdo","Semi-sentado"],
+    c: 2
+  },
+  { // 20 — D
+    q: "Qual EIC é utilizado para acesso cirúrgico ao lobo caudal do pulmão (esquerdo)?",
+    opts: ["2º ou 3º","4º ou 5º","3º ou 4º","5º ou 6º"],
+    c: 3
+  },
+  { // 21 — A
+    q: "A incisão paracostal/oblíqua é indicada principalmente para:",
+    opts: ["Cirurgias renais, adrenal e ovariohisterectomia","Ressecção de neoplasias cardíacas","Acesso à traqueia cervical","Pericardectomia"],
+    c: 0
+  },
+  { // 22 — B
+    q: "Qual fio é indicado para sutura da pele em laparotomia mediana?",
+    opts: ["Poliglactina 910","Náilon","Polidioxanona","Categute simples"],
+    c: 1
+  },
+  { // 23 — C
+    q: "Na síntese intercostal, os nós devem ser serrados:",
+    opts: ["Do centro para as extremidades","Todos ao mesmo tempo","Das extremidades para o centro","Alternadamente cranial-caudal"],
+    c: 2
+  },
+  { // 24 — D
+    q: "O ligamento falciforme é rompido em qual etapa da laparotomia mediana?",
+    opts: ["Após incisão da pele","Antes da tricotomia","Durante antissepsia","Após incisão da linha alba"],
+    c: 3
+  },
+  { // 25 — A
+    q: "A uretrostomia é uma cirurgia realizada com acesso à:",
+    opts: ["Cavidade pélvica","Cavidade torácica","Cavidade abdominal cranial","Cavidade nasal"],
+    c: 0
+  },
+  { // 26 — B
+    q: "Qual das patologias esofágicas é indicação de toracotomia?",
+    opts: ["Fístula tráqueo-esofágica cervical","Megaesôfago e divertículo esofágico torácico","Úlcera esofágica cervical","Refluxo gastroesofágico simples"],
+    c: 1
+  },
+  { // 27 — C
+    q: "Qual tipo de incisão abdominal é pré-retro-umbilical?",
+    opts: ["Apenas pré-umbilical com desvio","Retro-umbilical exclusiva","Estende-se antes e depois do umbigo","Paramediana unilateral"],
+    c: 2
+  },
+  { // 28 — D
+    q: "A toracotomia lateral permite acessar qual fração da cavidade torácica?",
+    opts: ["Toda a cavidade bilateral","Dois terços laterais","Metade ipsilateral","Um terço lateral e do mediastino"],
+    c: 3
+  },
+  { // 29 — A
+    q: "O 1º plano de síntese na laparotomia mediana contempla:",
+    opts: ["Fáscia do músculo reto abdominal e peritônio","Subcutâneo com intradérmico","Pele com pontos Wolf","Músculo transverso com Náilon"],
+    c: 0
+  },
+  { // 30 — B
+    q: "Qual vantagem a esternotomia oferece sobre a toracotomia lateral em comprometimento bilateral?",
+    opts: ["Menor dor pós-operatória","Acesso simultâneo a ambos os lados do tórax","Recuperação mais rápida","Não requer ventilação mecânica"],
+    c: 1
+  },
+];
+
+/* ── VARIÁVEIS DE ESTADO ───────────────────────── */
+const TEMPO_POR_QUESTAO = 25;
+const PONTOS_MAX        = 100;
+const STREAK_BONUS_A    = 5;   // acertos seguidos para bônus
+const STREAK_MALUS_A    = 3;   // erros seguidos para penalidade
+const BONUS_PERC        = 0.25;
+const MALUS_PERC        = 0.15;
+
+let nomeAluno   = '';
+let turmaAluno  = 'Única';
+let questaoIdx  = 0;
+let pontuacao   = 0;
+let acertos     = 0;
+let erros       = 0;
+let streakAcert = 0;
+let streakErros = 0;
+let totalBonus  = 0;
+let totalMalus  = 0;
+let timerInt    = null;
+let tempoRestante = TEMPO_POR_QUESTAO;
+let respondeu   = false;
+let ordemQ      = [];
+
+/* ── UTILITÁRIOS ───────────────────────────────── */
+function mostrar(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
+  window.scrollTo(0,0);
+}
+
+function embaralhar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ── VERIFICAR TENTATIVA ANTERIOR ─────────────── */
+function chaveLocal() { return `quiz_cc_${nomeAluno.trim().toLowerCase()}_${turmaAluno}`; }
+
+function iniciar() {
+  nomeAluno  = document.getElementById('inp-nome').value.trim();
+  const erro = document.getElementById('erro-cadastro');
+  if (!nomeAluno) { erro.textContent = 'Digite seu nome para continuar.'; return; }
+  if (localStorage.getItem(chaveLocal())) {
+    erro.textContent = '⚠️ Você já realizou este quiz. Apenas uma tentativa é permitida.';
+    return;
+  }
+  erro.textContent = '';
+  ordemQ = embaralhar([...Array(perguntas.length).keys()]);
+  questaoIdx  = 0; pontuacao = 0; acertos = 0; erros = 0;
+  streakAcert = 0; streakErros = 0; totalBonus = 0; totalMalus = 0;
+  mostrar('tela-quiz');
+  renderQuestao();
+}
+
+/* ── RENDER QUESTÃO ────────────────────────────── */
+function renderQuestao() {
+  respondeu = false;
+  const idx = ordemQ[questaoIdx];
+  const p   = perguntas[idx];
+  const total = ordemQ.length;
+
+  document.getElementById('perg-num').textContent   = `QUESTÃO ${questaoIdx+1} / ${total}`;
+  document.getElementById('perg-texto').textContent = p.q;
+  document.getElementById('pts-display').textContent = Math.round(pontuacao);
+  document.getElementById('progress').style.width   = `${((questaoIdx)/total)*100}%`;
+
+  const letras = ['A','B','C','D'];
+  const cont = document.getElementById('opcoes');
+  cont.innerHTML = '';
+  p.opts.forEach((op, i) => {
+    const div = document.createElement('div');
+    div.className = 'opcao';
+    div.innerHTML = `<span class="letra">${letras[i]}</span>${op}`;
+    div.onclick = () => responder(i, idx, div);
+    cont.appendChild(div);
+  });
+
+  atualizarStreakBox();
+  iniciarTimer();
+}
+
+/* ── TIMER ─────────────────────────────────────── */
+function iniciarTimer() {
+  tempoRestante = TEMPO_POR_QUESTAO;
+  atualizarTimer();
+  clearInterval(timerInt);
+  timerInt = setInterval(() => {
+    tempoRestante--;
+    atualizarTimer();
+    if (tempoRestante <= 0) {
+      clearInterval(timerInt);
+      if (!respondeu) timeOut();
+    }
+  }, 1000);
+}
+function atualizarTimer() {
+  const r = 26; const circ = 2 * Math.PI * r;
+  const frac = tempoRestante / TEMPO_POR_QUESTAO;
+  document.getElementById('timer-circulo').style.strokeDashoffset = circ * (1 - frac);
+  document.getElementById('timer-num').textContent = tempoRestante;
+  document.getElementById('timer-circulo').style.stroke =
+    tempoRestante > 10 ? '#1565C0' : tempoRestante > 5 ? '#F57F17' : '#C62828';
+}
+function timeOut() {
+  respondeu = true;
+  // marca todas como bloqueadas e mostra correta
+  const opcoes = document.querySelectorAll('.opcao');
+  const idx = ordemQ[questaoIdx];
+  opcoes.forEach((op, i) => {
+    op.classList.add('bloq');
+    if (i === perguntas[idx].c) op.classList.add('certa');
+  });
+  streakAcert = 0; streakErros++; erros++;
+  if (streakErros >= STREAK_MALUS_A) {
+    const mal = Math.round(pontuacao * MALUS_PERC);
+    pontuacao = Math.max(0, pontuacao - mal);
+    totalMalus += mal; streakErros = 0;
+    mostrarFlash(`-${mal} pts`, '#C62828');
+  }
+  atualizarStreakBox();
+  setTimeout(proximaQuestao, 1400);
+}
+
+/* ── RESPONDER ─────────────────────────────────── */
+function responder(escolha, idx, el) {
+  if (respondeu) return;
+  respondeu = true;
+  clearInterval(timerInt);
+
+  const opcoes = document.querySelectorAll('.opcao');
+  opcoes.forEach(o => o.classList.add('bloq'));
+
+  const correto = perguntas[idx].c;
+  if (escolha === correto) {
+    el.classList.add('certa');
+    const pts = Math.round(PONTOS_MAX * (tempoRestante / TEMPO_POR_QUESTAO));
+    streakAcert++; streakErros = 0; acertos++;
+    let bonus = 0;
+    if (streakAcert >= STREAK_BONUS_A) {
+      bonus = Math.round(pts * BONUS_PERC);
+      totalBonus += bonus; streakAcert = 0;
+    }
+    pontuacao += pts + bonus;
+    mostrarFlash(`+${pts + bonus} pts`, '#2E7D32');
+  } else {
+    el.classList.add('errada');
+    opcoes[correto].classList.add('certa');
+    streakAcert = 0; streakErros++; erros++;
+    if (streakErros >= STREAK_MALUS_A) {
+      const mal = Math.round(pontuacao * MALUS_PERC);
+      pontuacao = Math.max(0, pontuacao - mal);
+      totalMalus += mal; streakErros = 0;
+      mostrarFlash(`-${mal} pts`, '#C62828');
+    } else {
+      mostrarFlash('✗ Errou', '#C62828');
+    }
+  }
+
+  document.getElementById('pts-display').textContent = Math.round(pontuacao);
+  atualizarStreakBox();
+  setTimeout(proximaQuestao, 1400);
+}
+
+function atualizarStreakBox() {
+  const box = document.getElementById('streak-box');
+  box.innerHTML = '';
+  if (streakAcert > 0) {
+    const el = document.createElement('div');
+    el.className = 'streak-item' + (streakAcert >= 4 ? ' bonus' : '');
+    el.textContent = `🔥 ${streakAcert} acertos seguidos`;
+    box.appendChild(el);
+  }
+  if (streakErros > 0) {
+    const el = document.createElement('div');
+    el.className = 'streak-item malus';
+    el.textContent = `⚠️ ${streakErros} erros seguidos`;
+    box.appendChild(el);
+  }
+}
+
+function mostrarFlash(txt, cor) {
+  const f = document.createElement('div');
+  f.className = 'pts-flash';
+  f.textContent = txt;
+  f.style.color = cor;
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 900);
+}
+
+/* ── PRÓXIMA / FIM ─────────────────────────────── */
+function proximaQuestao() {
+  questaoIdx++;
+  if (questaoIdx < ordemQ.length) {
+    renderQuestao();
+  } else {
+    finalizarQuiz();
+  }
+}
+
+function finalizarQuiz() {
+  clearInterval(timerInt);
+  const pts = Math.round(pontuacao);
+  document.getElementById('res-nome').textContent   = nomeAluno;
+  document.getElementById('res-pontos').textContent = pts;
+  document.getElementById('res-sub').textContent    =
+    `Acertos: ${acertos} | Erros: ${erros} | Bônus: +${totalBonus} | Penalidades: -${totalMalus}`;
+
+  localStorage.setItem(chaveLocal(), JSON.stringify({pts, acertos, erros}));
+
+  mostrar('tela-resultado');
+  // aguarda 2s para o registro chegar ao Sheets antes de carregar ranking
+  setTimeout(() => {
+    enviarResultado(pts);
+    setTimeout(carregarRanking, 2000);
+  }, 500);
+
+  // atualiza o ranking automaticamente a cada 30 segundos
+  clearInterval(window._rankingInt);
+  window._rankingInt = setInterval(carregarRanking, 30000);
+}
+
+/* ── GOOGLE SHEETS ─────────────────────────────── */
+function enviarResultado(pts) {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('COLE_AQUI')) return;
+  const agora = new Date();
+  const data  = agora.toLocaleDateString('pt-BR');
+  const hora  = agora.toLocaleTimeString('pt-BR');
+
+  const payload = new URLSearchParams({
+    acao:      'registrar',
+    nome:      nomeAluno,
+    pontuacao: pts,
+    acertos:   acertos,
+    erros:     erros,
+    data:      data,
+    hora:      hora
+  });
+
+  fetch(GOOGLE_SCRIPT_URL, {
+    method:  'POST',
+    mode:    'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    payload.toString()
+  }).catch(() => {});
+}
+
+function carregarRanking() {
+  const cont = document.getElementById('ranking-container');
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('COLE_AQUI')) {
+    cont.innerHTML = '<p style="color:#888;font-size:.9rem">Configure o Google Sheets para ver o ranking.</p>';
+    return;
+  }
+  fetch(GOOGLE_SCRIPT_URL + '?acao=ranking')
+    .then(r => r.json())
+    .then(dados => renderRanking(dados, cont))
+    .catch(() => {
+      cont.innerHTML = '<p style="color:#888;font-size:.9rem">Não foi possível carregar o ranking agora.</p>';
+    });
+}
+
+function renderRanking(dados, cont) {
+  if (!dados || !dados.length) {
+    cont.innerHTML = '<p style="color:#888">Nenhum resultado ainda.</p>'; return;
+  }
+  const classes = ['ouro','prata','bronze'];
+  const estrelas = ['⭐','⭐','⭐'];
+  const ul = document.createElement('ul');
+  ul.className = 'ranking-lista';
+  dados.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.className = 'ranking-item' + (i < 3 ? ' ' + classes[i] : '');
+    li.innerHTML = `
+      <span class="ranking-pos">${i < 3 ? estrelas[i] : '#' + (i+1)}</span>
+      <div class="ranking-nome">${item.nome}</div>
+      <span class="ranking-pontos">${Math.round(item.pontuacao)} pts</span>
+    `;
+    ul.appendChild(li);
+  });
+  cont.innerHTML = '';
+  cont.appendChild(ul);
+}
+
+function voltarInicio() {
+  mostrar('tela-cadastro');
+  document.getElementById('inp-nome').value = '';
+}
+</script>
+</body>
+</html>
